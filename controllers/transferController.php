@@ -1,7 +1,7 @@
 <?php
-include_once '../models/balanceModel.php';
-include_once '../models/transferModel.php';
-include_once '../koneksi.php';
+include_once "C:/xampp/htdocs/HW4-Apl_Bank_API-kel2/models/balanceModel.php";
+include_once "C:/xampp/htdocs/HW4-Apl_Bank_API-kel2/models/transferModel.php";
+include_once "C:/xampp/htdocs/HW4-Apl_Bank_API-kel2/koneksi.php";
 
 class TransferController {
     private $balanceModel;

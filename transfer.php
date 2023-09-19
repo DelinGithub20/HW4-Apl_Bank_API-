@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $amount = $_POST['amount'] ?? null;
 
     if ($fromAccountId && $toAccountId && $amount) {
-        $transferController = new TransferController($connection);
+        $transferController = new TransferController(getConnection());
         $response = $transferController->makeTransfer($fromAccountId, $toAccountId, $amount);
     } else {
         $response["message"] = "Incomplete data";
