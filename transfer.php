@@ -1,7 +1,9 @@
 <?php
 header("Content-Type: application/json");
 
-include_once 'koneksi.php';
+// Koneksi ke database
+include "./koneksi.php";
+$connection = getConnection();
 
 $response = ["status" => "error", "message" => "Invalid request"];
 
@@ -10,39 +12,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $toAccountId = $_POST['toAccountId'] ?? null;
     $amount = $_POST['amount'] ?? null;
 
-    $connection = getConnection(); // Menggunakan fungsi untuk mendapatkan koneksi
-
     if ($fromAccountId && $toAccountId && $amount) {
-        $currentBalanceQuery = "SELECT saldo FROM akun_bank WHERE id_akun = '$fromAccountId'";
-        $currentBalanceResult = mysqli_query($connection, $currentBalanceQuery);
-        $currentBalanceData = mysqli_fetch_assoc($currentBalanceResult);
-        $currentBalance = $currentBalanceData['saldo'] ?? 0;
-
-        if ($currentBalance < $amount) {
-            $response["message"] = "Saldo tidak mencukupi";
-        } else {
-            $deductQuery = "UPDATE akun_bank SET saldo = saldo - $amount WHERE id_akun = '$fromAccountId'";
-            $addQuery = "UPDATE akun_bank SET saldo = saldo + $amount WHERE id_akun = '$toAccountId'";
-
+        // Ambil saldo akun pengirim
+        $sql = "SELECT saldo FROM akun_bank WHERE id_akun = $fromAccountId";
+        $result = mysqli_query($connection, $sql);
+        $fromAccount = mysqli_fetch_assoc($result);
+        
+        if ($fromAccount['saldo'] >= $amount) {
+            // Mulai transaksi
             mysqli_begin_transaction($connection);
 
-            $deducted = mysqli_query($connection, $deductQuery);
-            $added = mysqli_query($connection, $addQuery);
+            // Kurangi saldo akun pengirim
+            $deduct = "UPDATE akun_bank SET saldo = saldo - $amount WHERE id_akun = $fromAccountId";
+            mysqli_query($connection, $deduct);
 
-            if ($deducted && $added) {
-                mysqli_commit($connection);
+            // Tambah saldo akun penerima
+            $add = "UPDATE akun_bank SET saldo = saldo + $amount WHERE id_akun = $toAccountId";
+            mysqli_query($connection, $add);
+
+            // Catat transfer
+            $transferLog = "INSERT INTO transfer (id_pengirim, id_penerima, jumlah) VALUES ($fromAccountId, $toAccountId, $amount)";
+            mysqli_query($connection, $transferLog);
+
+            // Komit transaksi jika semuanya berjalan lancar
+            if (mysqli_commit($connection)) {
                 $response["status"] = "success";
-                $response["message"] = "Transfer berhasil";
+                $response["message"] = "Transfer successful";
             } else {
                 mysqli_rollback($connection);
-                $response["message"] = "Transfer gagal";
+                $response["message"] = "Transfer failed";
             }
+        } else {
+            $response["message"] = "Insufficient balance";
         }
     } else {
-        $response["message"] = "Data tidak lengkap";
+        $response["message"] = "Incomplete data";
     }
 }
 
 echo json_encode($response);
-
 ?>
