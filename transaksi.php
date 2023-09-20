@@ -1,6 +1,8 @@
 <?php
 
 include_once 'koneksi.php';
+$connection = getConnection();
+
 // Endpoint untuk mengambil data transaksi
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {

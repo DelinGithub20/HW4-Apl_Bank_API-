@@ -1,5 +1,6 @@
 <?php
 include "koneksi.php";
+$connection = getConnection();
 
 // Pastikan ada parameter "id_akun" dalam permintaan HTTP
 if (isset($_GET['id_akun'])) {
